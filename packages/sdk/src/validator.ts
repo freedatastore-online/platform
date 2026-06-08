@@ -1,4 +1,5 @@
 import { query } from './engine.js';
+import { escId, escStr } from './loader.js';
 
 export interface ColumnSchema {
   name: string;
@@ -32,12 +33,13 @@ export interface ValidationResult {
 
 export async function validate(table: string, schema: TableSchema): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
+  const t = escId(table);
 
-  const countResult = await query(`SELECT count(*) as cnt FROM "${table}"`);
+  const countResult = await query(`SELECT count(*) as cnt FROM ${t}`);
   const rowCount = Number(countResult[0]?.cnt ?? 0);
 
   const colResult = await query(
-    `SELECT column_name, data_type FROM information_schema.columns WHERE table_name='${table}'`,
+    `SELECT column_name, data_type FROM information_schema.columns WHERE table_name=${escStr(table)}`,
   );
   const existingCols = new Map(colResult.map((r) => [String(r.column_name), String(r.data_type)]));
 
@@ -70,9 +72,11 @@ export async function validate(table: string, schema: TableSchema): Promise<Vali
       continue;
     }
 
+    const c = escId(col.name);
+
     if (col.required) {
       const nullResult = await query(
-        `SELECT count(*) as cnt FROM "${table}" WHERE "${col.name}" IS NULL`,
+        `SELECT count(*) as cnt FROM ${t} WHERE ${c} IS NULL`,
       );
       const nulls = Number(nullResult[0]?.cnt ?? 0);
       if (nulls > 0) {
@@ -86,8 +90,10 @@ export async function validate(table: string, schema: TableSchema): Promise<Vali
     }
 
     if (col.min !== undefined) {
+      const minVal = Number(col.min);
+      if (!Number.isFinite(minVal)) continue;
       const result = await query(
-        `SELECT count(*) as cnt FROM "${table}" WHERE "${col.name}" < ${col.min}`,
+        `SELECT count(*) as cnt FROM ${t} WHERE ${c} < ${minVal}`,
       );
       const cnt = Number(result[0]?.cnt ?? 0);
       if (cnt > 0) {
@@ -101,8 +107,10 @@ export async function validate(table: string, schema: TableSchema): Promise<Vali
     }
 
     if (col.max !== undefined) {
+      const maxVal = Number(col.max);
+      if (!Number.isFinite(maxVal)) continue;
       const result = await query(
-        `SELECT count(*) as cnt FROM "${table}" WHERE "${col.name}" > ${col.max}`,
+        `SELECT count(*) as cnt FROM ${t} WHERE ${c} > ${maxVal}`,
       );
       const cnt = Number(result[0]?.cnt ?? 0);
       if (cnt > 0) {
@@ -117,7 +125,7 @@ export async function validate(table: string, schema: TableSchema): Promise<Vali
 
     if (col.pattern) {
       const result = await query(
-        `SELECT count(*) as cnt FROM "${table}" WHERE "${col.name}" IS NOT NULL AND NOT regexp_matches("${col.name}"::VARCHAR, '${col.pattern}')`,
+        `SELECT count(*) as cnt FROM ${t} WHERE ${c} IS NOT NULL AND NOT regexp_matches(${c}::VARCHAR, ${escStr(col.pattern)})`,
       );
       const cnt = Number(result[0]?.cnt ?? 0);
       if (cnt > 0) {
@@ -131,9 +139,9 @@ export async function validate(table: string, schema: TableSchema): Promise<Vali
     }
 
     if (col.allowedValues) {
-      const vals = col.allowedValues.map((v) => `'${v}'`).join(', ');
+      const vals = col.allowedValues.map((v) => escStr(v)).join(', ');
       const result = await query(
-        `SELECT count(*) as cnt FROM "${table}" WHERE "${col.name}" IS NOT NULL AND "${col.name}"::VARCHAR NOT IN (${vals})`,
+        `SELECT count(*) as cnt FROM ${t} WHERE ${c} IS NOT NULL AND ${c}::VARCHAR NOT IN (${vals})`,
       );
       const cnt = Number(result[0]?.cnt ?? 0);
       if (cnt > 0) {

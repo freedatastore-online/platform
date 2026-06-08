@@ -1,5 +1,5 @@
 export { getDB, getConnection, query, registerFile, reset } from './engine.js';
-export { loadFile } from './loader.js';
+export { loadFile, escId, escStr } from './loader.js';
 export type { FileFormat, LoadResult } from './loader.js';
 export { profile } from './profiler.js';
 export type { ColumnProfile, TableProfile } from './profiler.js';
