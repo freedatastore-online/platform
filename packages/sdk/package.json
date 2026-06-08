@@ -1,0 +1,60 @@
+{
+  "name": "@freedatastore/sdk",
+  "version": "0.1.0",
+  "description": "Browser SDK for data tools on freedatastore.online — DuckDB-WASM, file loading, profiling, cleaning, validation, export.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js"
+    }
+  },
+  "homepage": "https://github.com/freedatastore-online/platform#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freedatastore-online/platform.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "freedatastore",
+    "sdk",
+    "duckdb",
+    "csv",
+    "data-profiling",
+    "data-cleaning",
+    "browser",
+    "wasm"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.7.0"
+  },
+  "sideEffects": false
+}

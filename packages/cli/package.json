@@ -1,0 +1,29 @@
+{
+  "name": "@freedatastore/cli",
+  "version": "0.1.0",
+  "description": "CLI for publishing data tools on freedatastore.online",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "fdts": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freedatastore-online/platform.git",
+    "directory": "packages/cli"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "typescript": "^5.7.0"
+  }
+}

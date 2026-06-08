@@ -1,0 +1,24 @@
+{
+  "name": "@freedatastore/backend",
+  "version": "0.1.0",
+  "description": "Host worker for freedatastore.online — R2 serving, registry, tool hosting",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freedatastore-online/platform.git",
+    "directory": "packages/backend"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260608.1",
+    "hono": "^4.7.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.18.0"
+  }
+}

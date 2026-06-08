@@ -1,0 +1,25 @@
+{
+  "name": "@freedatastore/compliance",
+  "version": "0.1.0",
+  "description": "Compliance checks for data tools published on freedatastore.online",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freedatastore-online/platform.git",
+    "directory": "packages/compliance"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "typescript": "^5.7.0"
+  }
+}

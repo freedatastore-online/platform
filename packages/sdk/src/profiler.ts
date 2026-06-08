@@ -1,0 +1,86 @@
+import { query } from './engine.js';
+
+export interface ColumnProfile {
+  name: string;
+  type: string;
+  nullCount: number;
+  nullPct: number;
+  distinctCount: number;
+  min: unknown;
+  max: unknown;
+  mean: number | null;
+  median: number | null;
+  stddev: number | null;
+  topValues: { value: unknown; count: number }[];
+}
+
+export interface TableProfile {
+  table: string;
+  rows: number;
+  columns: number;
+  profiles: ColumnProfile[];
+  duplicateRows: number;
+}
+
+export async function profile(table: string): Promise<TableProfile> {
+  const countResult = await query(`SELECT count(*) as cnt FROM "${table}"`);
+  const rows = Number(countResult[0]?.cnt ?? 0);
+
+  const colResult = await query(
+    `SELECT column_name, data_type FROM information_schema.columns WHERE table_name='${table}' ORDER BY ordinal_position`,
+  );
+
+  const profiles: ColumnProfile[] = [];
+
+  for (const col of colResult) {
+    const name = String(col.column_name);
+    const type = String(col.data_type);
+    const isNumeric = /INT|FLOAT|DOUBLE|DECIMAL|NUMERIC|BIGINT|SMALLINT|TINYINT|HUGEINT/i.test(
+      type,
+    );
+
+    const statsSQL = `
+      SELECT
+        count(*) - count("${name}") as null_count,
+        ROUND(100.0 * (count(*) - count("${name}")) / GREATEST(count(*), 1), 2) as null_pct,
+        count(DISTINCT "${name}") as distinct_count,
+        min("${name}")::VARCHAR as min_val,
+        max("${name}")::VARCHAR as max_val
+        ${isNumeric ? `, avg("${name}") as mean_val, median("${name}") as median_val, stddev("${name}") as stddev_val` : ''}
+      FROM "${table}"
+    `;
+
+    const stats = (await query(statsSQL))[0]!;
+
+    const topSQL = `
+      SELECT "${name}"::VARCHAR as val, count(*) as cnt
+      FROM "${table}"
+      WHERE "${name}" IS NOT NULL
+      GROUP BY "${name}"
+      ORDER BY cnt DESC
+      LIMIT 10
+    `;
+    const topRows = await query(topSQL);
+    const topValues = topRows.map((r) => ({ value: r.val, count: Number(r.cnt) }));
+
+    profiles.push({
+      name,
+      type,
+      nullCount: Number(stats.null_count),
+      nullPct: Number(stats.null_pct),
+      distinctCount: Number(stats.distinct_count),
+      min: stats.min_val,
+      max: stats.max_val,
+      mean: isNumeric ? Number(stats.mean_val) : null,
+      median: isNumeric ? Number(stats.median_val) : null,
+      stddev: isNumeric ? Number(stats.stddev_val) : null,
+      topValues,
+    });
+  }
+
+  const dupSQL = `SELECT count(*) as cnt FROM (SELECT *, count(*) as _n FROM "${table}" GROUP BY ALL HAVING _n > 1)`;
+  const dupResult = await query(dupSQL);
+  const duplicateRows = Number(dupResult[0]?.cnt ?? 0);
+
+  return { table, rows, columns: profiles.length, profiles, duplicateRows };
+}
